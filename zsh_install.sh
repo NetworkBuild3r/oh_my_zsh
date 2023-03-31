@@ -14,7 +14,8 @@ fi
 # Backup zsh config if it exists
 if [ -f ~/.zshrc ]; then
     echo "Backing up existing ~/.zshrc file..."
-    mv ~/.zshrc ~/.zshrc.backup || { echo "Failed to backup ~/.zshrc file. Please check your file permissions and try again." >&2; exit 1; }
+    timestamp=$(date '+%Y%m%d%H%M%S')
+    mv ~/.zshrc ~/.zshrc.backup.$timestamp || { echo "Failed to backup ~/.zshrc file. Please check your file permissions and try again." >&2; exit 1; }
 fi
 
 # Create links to zsh config files
@@ -25,8 +26,9 @@ create_link() {
         echo "Link $dest already exists, skipping."
     else
         if [ -f $dest ]; then
+            timestamp=$(date '+%Y%m%d%H%M%S')
             echo "Backing up existing $dest file..."
-            mv $dest $dest.backup || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
+            mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
         fi
         ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
     fi
