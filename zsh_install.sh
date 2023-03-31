@@ -19,12 +19,25 @@ fi
 
 # Create links to zsh config files
 echo "Creating links to zsh config files..."
-ln -s ~/.zprezto/runcoms/zlogin ~/.zlogin || { echo "Failed to create link for ~/.zlogin file. Please check your file permissions and try again." >&2; exit 1; }
-ln -s ~/.zprezto/runcoms/zlogout ~/.zlogout || { echo "Failed to create link for ~/.zlogout file. Please check your file permissions and try again." >&2; exit 1; }
-ln -s ~/.zprezto/runcoms/zpreztorc ~/.zpreztorc || { echo "Failed to create link for ~/.zpreztorc file. Please check your file permissions and try again." >&2; exit 1; }
-ln -s ~/.zprezto/runcoms/zprofile ~/.zprofile || { echo "Failed to create link for ~/.zprofile file. Please check your file permissions and try again." >&2; exit 1; }
-ln -s ~/.zprezto/runcoms/zshenv ~/.zshenv || { echo "Failed to create link for ~/.zshenv file. Please check your file permissions and try again." >&2; exit 1; }
-ln -s ~/.zprezto/runcoms/zshrc ~/.zshrc || { echo "Failed to create link for ~/.zshrc file. Please check your file permissions and try again." >&2; exit 1; }
+create_link() {
+    local src=$1 dest=$2
+    if [ -e $dest ]; then
+        echo "Link $dest already exists, skipping."
+    else
+        if [ -f $dest ]; then
+            echo "Backing up existing $dest file..."
+            mv $dest $dest.backup || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
+        fi
+        ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
+    fi
+}
+
+create_link ~/.zprezto/runcoms/zlogin ~/.zlogin
+create_link ~/.zprezto/runcoms/zlogout ~/.zlogout
+create_link ~/.zprezto/runcoms/zpreztorc ~/.zpreztorc
+create_link ~/.zprezto/runcoms/zprofile ~/.zprofile
+create_link ~/.zprezto/runcoms/zshenv ~/.zshenv
+create_link ~/.zprezto/runcoms/zshrc ~/.zshrc
 
 # Source the updated zsh configuration
 echo "Sourcing the updated zsh configuration..."
