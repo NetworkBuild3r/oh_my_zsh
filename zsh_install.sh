@@ -41,6 +41,10 @@ create_link ~/.zprezto/runcoms/zprofile ~/.zprofile
 create_link ~/.zprezto/runcoms/zshenv ~/.zshenv
 create_link ~/.zprezto/runcoms/zshrc ~/.zshrc
 
+# Change the default shell to zsh
+echo "Changing the default shell to zsh..."
+chsh -s $(which zsh) || { echo "Failed to change the default shell to zsh. Please check your file permissions and try again." >&2; exit 1; }
+
 # Source the updated zsh configuration
 echo "Sourcing the updated zsh configuration..."
 source ~/.zshrc || { echo "Failed to source the updated zsh configuration. Please check your file permissions and try again." >&2; exit 1; }
