@@ -5,12 +5,6 @@ echo "Installing Git and Zsh..."
 sudo apt-get update || { echo "Failed to update packages. Please check your network connection and try again." >&2; exit 1; }
 sudo apt-get install -y git zsh || { echo "Failed to install Git and Zsh. Please check your network connection and try again." >&2; exit 1; }
 
-# Clone Prezto if ~/.zprezto doesn't exist
-if [ ! -d ~/.zprezto ]; then
-    echo "Cloning Prezto..."
-    git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
-fi
-
 # Remove existing .zpreztorc from Prezto repository if it doesn't match the updated one
 prezto_zpreztorc_path=~/.zprezto/runcoms/zpreztorc
 updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
