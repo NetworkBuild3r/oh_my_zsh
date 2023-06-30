@@ -27,19 +27,13 @@ create_link() {
     local src=$1 dest=$2
     if [ -L $dest ]; then
         if [ "$(readlink -f $dest)" == "$src" ]; then
-            echo "Link $dest already exists and matches, skipping."
+            echo "Link $dest already exists, skipping."
             return
-        else
-            echo "Link $dest already exists but does not match, replacing..."
-            rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
         fi
-    elif [ -e $dest ]; then
-        if [ -f $dest ]; then
-            timestamp=$(date '+%Y%m%d%H%M%S')
-            echo "Backing up existing $dest file..."
-            mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
-        fi
-        rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
+    elif [ -e $dest ] && [ ! -f $dest ] && [ ! -L $dest ]; then
+        timestamp=$(date '+%Y%m%d%H%M%S')
+        echo "Backing up existing $dest file..."
+        mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
     fi
     ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
