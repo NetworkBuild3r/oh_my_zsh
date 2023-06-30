@@ -25,14 +25,17 @@ fi
 echo "Creating links to zsh config files..."
 create_link() {
     local src=$1 dest=$2
-    if [ -e $dest ]; then
-        if [ "$(readlink -f $dest)" == "$(readlink -f $src)" ]; then
+    if [ -L $dest ]; then
+        if [ "$(readlink -f $dest)" == "$src" ]; then
             echo "Link $dest already exists and matches, skipping."
             return
         else
             echo "Link $dest already exists but does not match, replacing..."
             rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
         fi
+    elif [ -e $dest ]; then
+        echo "Destination $dest already exists and is not a symbolic link, skipping."
+        return
     fi
     ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
