@@ -34,8 +34,12 @@ create_link() {
             rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
         fi
     elif [ -e $dest ]; then
-        echo "Destination $dest already exists and is not a symbolic link, skipping."
-        return
+        if [ -f $dest ]; then
+            timestamp=$(date '+%Y%m%d%H%M%S')
+            echo "Backing up existing $dest file..."
+            mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
+        fi
+        rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
     fi
     ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
