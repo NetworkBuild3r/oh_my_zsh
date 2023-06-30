@@ -55,4 +55,5 @@ else
 fi
 
 echo "oh-my-zsh with Prezto theme and plugins has been installed successfully!"
-echo "You may need to restart your terminal or run 'source ~/.zshrc' to see
+echo "You may need to restart your terminal or run 'source ~/.zshrc' to see the changes."
+
