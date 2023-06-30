@@ -25,15 +25,12 @@ fi
 echo "Creating links to zsh config files..."
 create_link() {
     local src=$1 dest=$2
-    if [ -L $dest ]; then
+    if [ -e $dest ] && [ ! -L $dest ]; then
         if [ "$(readlink -f $dest)" == "$src" ]; then
             echo "Link $dest already exists, skipping."
             return
         fi
-    elif [ -e $dest ] && [ ! -f $dest ] && [ ! -L $dest ]; then
-        timestamp=$(date '+%Y%m%d%H%M%S')
-        echo "Backing up existing $dest file..."
-        mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
+        rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
     fi
     ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
