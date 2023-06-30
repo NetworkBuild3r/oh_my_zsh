@@ -8,14 +8,7 @@ sudo apt-get install -y git zsh || { echo "Failed to install Git and Zsh. Please
 # Clone Prezto if ~/.zprezto doesn't exist
 if [ ! -d ~/.zprezto ]; then
     echo "Cloning Prezto..."
-    git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
-fi
-
-# Backup zsh config if it exists
-if [ -f ~/.zshrc ]; then
-    echo "Backing up existing ~/.zshrc file..."
-    timestamp=$(date '+%Y%m%d%H%M%S')
-    mv ~/.zshrc ~/.zshrc.backup.$timestamp || { echo "Failed to backup ~/.zshrc file. Please check your file permissions and try again." >&2; exit 1; }
+    git clone --recursive https://github.com/Dan70402/zprezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
 fi
 
 # Create links to zsh config files
@@ -25,11 +18,6 @@ create_link() {
     if [ -e $dest ]; then
         echo "Link $dest already exists, skipping."
     else
-        if [ -f $dest ]; then
-            timestamp=$(date '+%Y%m%d%H%M%S')
-            echo "Backing up existing $dest file..."
-            mv $dest $dest.backup.$timestamp || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
-        fi
         ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
     fi
 }
@@ -56,4 +44,3 @@ fi
 
 echo "oh-my-zsh with Prezto theme and plugins has been installed successfully!"
 echo "You may need to restart your terminal or run 'source ~/.zshrc' to see the changes."
-
