@@ -24,10 +24,14 @@ create_link() {
 
 create_link ~/.zprezto/runcoms/zlogin ~/.zlogin
 create_link ~/.zprezto/runcoms/zlogout ~/.zlogout
-create_link ~/.zprezto/runcoms/zpreztorc ~/.zpreztorc
 create_link ~/.zprezto/runcoms/zprofile ~/.zprofile
 create_link ~/.zprezto/runcoms/zshenv ~/.zshenv
 create_link ~/.zprezto/runcoms/zshrc ~/.zshrc
+
+# Fetch .zpreztorc from the GitHub repo
+echo "Fetching .zpreztorc from GitHub..."
+curl -fsSL https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc -o ~/.zprezto/runcoms/zpreztorc || { echo "Failed to fetch .zpreztorc. Please check your network connection and try again." >&2; exit 1; }
+create_link ~/.zprezto/runcoms/zpreztorc ~/.zpreztorc
 
 # Check if already running in zsh
 if [[ $SHELL == *"zsh" ]]; then
