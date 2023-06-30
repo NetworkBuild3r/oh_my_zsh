@@ -5,6 +5,12 @@ echo "Installing Git and Zsh..."
 sudo apt-get update || { echo "Failed to update packages. Please check your network connection and try again." >&2; exit 1; }
 sudo apt-get install -y git zsh || { echo "Failed to install Git and Zsh. Please check your network connection and try again." >&2; exit 1; }
 
+# Clone Prezto if ~/.zprezto doesn't exist
+if [ ! -d ~/.zprezto ]; then
+    echo "Cloning Prezto..."
+    git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
+fi
+
 # Remove existing .zpreztorc from Prezto repository if it doesn't match the updated one
 prezto_zpreztorc_path=~/.zprezto/runcoms/zpreztorc
 updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
@@ -20,10 +26,15 @@ echo "Creating links to zsh config files..."
 create_link() {
     local src=$1 dest=$2
     if [ -e $dest ]; then
-        echo "Link $dest already exists, skipping."
-    else
-        ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
+        if [ "$(readlink -f $dest)" == "$(readlink -f $src)" ]; then
+            echo "Link $dest already exists and matches, skipping."
+            return
+        else
+            echo "Link $dest already exists but does not match, replacing..."
+            rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
+        fi
     fi
+    ln -s $src $dest || { echo "Failed to create link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
 
 create_link ~/.zprezto/runcoms/zlogin ~/.zlogin
