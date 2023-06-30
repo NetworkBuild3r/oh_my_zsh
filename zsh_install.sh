@@ -8,7 +8,17 @@ sudo apt-get install -y git zsh || { echo "Failed to install Git and Zsh. Please
 # Clone Prezto if ~/.zprezto doesn't exist
 if [ ! -d ~/.zprezto ]; then
     echo "Cloning Prezto..."
-    git clone --recursive https://github.com/Dan70402/zprezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
+    git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
+fi
+
+# Remove existing .zpreztorc from Prezto repository if it doesn't match the updated one
+prezto_zpreztorc_path=~/.zprezto/runcoms/zpreztorc
+updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
+if [ -e $prezto_zpreztorc_path ]; then
+    if ! cmp -s $prezto_zpreztorc_path <(curl -fsSL $updated_zpreztorc_url); then
+        echo "Removing existing .zpreztorc..."
+        rm $prezto_zpreztorc_path || { echo "Failed to remove existing .zpreztorc file. Please check your file permissions and try again." >&2; exit 1; }
+    fi
 fi
 
 # Create links to zsh config files
@@ -30,8 +40,8 @@ create_link ~/.zprezto/runcoms/zshrc ~/.zshrc
 
 # Fetch .zpreztorc from the GitHub repo
 echo "Fetching .zpreztorc from GitHub..."
-curl -fsSL https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc -o ~/.zprezto/runcoms/zpreztorc || { echo "Failed to fetch .zpreztorc. Please check your network connection and try again." >&2; exit 1; }
-create_link ~/.zprezto/runcoms/zpreztorc ~/.zpreztorc
+curl -fsSL $updated_zpreztorc_url -o $prezto_zpreztorc_path || { echo "Failed to fetch .zpreztorc. Please check your network connection and try again." >&2; exit 1; }
+create_link $prezto_zpreztorc_path ~/.zpreztorc
 
 # Check if already running in zsh
 if [[ $SHELL == *"zsh" ]]; then
