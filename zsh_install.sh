@@ -56,17 +56,17 @@ curl -fsSL $updated_zpreztorc_url -o $prezto_zpreztorc_path || { echo "Failed to
 create_link $prezto_zpreztorc_path ~/.zpreztorc
 
 # Check if already running in zsh
-if [[ $SHELL == *"zsh" ]]; then
-    echo "Already running in zsh."
-else
-    # Change the default shell to zsh
-    echo "Changing the default shell to zsh..."
-    chsh -s $(which zsh) || { echo "Failed to change the default shell to zsh. Please check your file permissions and try again." >&2; exit 1; }
+# if [[ $SHELL == *"zsh" ]]; then
+#     echo "Already running in zsh."
+# else
+#     # Change the default shell to zsh
+#     echo "Changing the default shell to zsh..."
+#     chsh -s $(which zsh) || { echo "Failed to change the default shell to zsh. Please check your file permissions and try again." >&2; exit 1; }
 
-    # Source the updated zsh configuration
-    echo "Sourcing the updated zsh configuration..."
-    source ~/.zshrc || { echo "Failed to source the updated zsh configuration. Please check your file permissions and try again." >&2; exit 1; }
-fi
+#     # Source the updated zsh configuration
+#     echo "Sourcing the updated zsh configuration..."
+#     source ~/.zshrc || { echo "Failed to source the updated zsh configuration. Please check your file permissions and try again." >&2; exit 1; }
+# fi
 
 echo "oh-my-zsh with Prezto theme and plugins has been installed successfully!"
 echo "You may need to restart your terminal or run 'source ~/.zshrc' to see the changes."
