@@ -1,5 +1,11 @@
 #!/bin/bash
 
+FLAG_FILE="$HOME/.setup_completed_flag"
+if [ -f "$FLAG_FILE" ]; then
+    echo "Setup already completed, skipping..."
+    exit 0
+fi
+
 # Install Git and Zsh
 echo "Installing Git and Zsh..."
 sudo apt-get update || { echo "Failed to update packages. Please check your network connection and try again." >&2; exit 1; }
@@ -70,3 +76,4 @@ create_link $prezto_zpreztorc_path ~/.zpreztorc
 
 echo "oh-my-zsh with Prezto theme and plugins has been installed successfully!"
 echo "You may need to restart your terminal or run 'source ~/.zshrc' to see the changes."
+touch "$FLAG_FILE"
