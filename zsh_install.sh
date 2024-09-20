@@ -1,79 +1,94 @@
 #!/bin/bash
 
+set -e  # Exit immediately if a command exits with a non-zero status
+
 FLAG_FILE="$HOME/.setup_completed_flag"
+
 if [ -f "$FLAG_FILE" ]; then
     echo "Setup already completed, skipping..."
     exit 0
 fi
 
-# Install Git and Zsh
-echo "Installing Git and Zsh..."
-sudo apt-get update || { echo "Failed to update packages. Please check your network connection and try again." >&2; exit 1; }
-sudo apt-get install -y git zsh || { echo "Failed to install Git and Zsh. Please check your network connection and try again." >&2; exit 1; }
+# Install Git and Zsh if not already installed
+echo "Checking for Git and Zsh..."
+if ! command -v git &> /dev/null; then
+    echo "Git not found, installing Git..."
+    sudo apt-get update
+    sudo apt-get install -y git
+else
+    echo "Git is already installed."
+fi
 
-# Clone Prezto if ~/.zprezto doesn't exist
-if [ ! -d ~/.zprezto ]; then
+if ! command -v zsh &> /dev/null; then
+    echo "Zsh not found, installing Zsh..."
+    sudo apt-get update
+    sudo apt-get install -y zsh
+else
+    echo "Zsh is already installed."
+fi
+
+# Clone Prezto if not already cloned
+if [ ! -d "$HOME/.zprezto" ]; then
     echo "Cloning Prezto..."
-    git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/.zprezto || { echo "Failed to clone Prezto. Please check your network connection and try again." >&2; exit 1; }
+    git clone --recursive https://github.com/sorin-ionescu/prezto.git "$HOME/.zprezto"
+else
+    echo "Prezto is already cloned."
 fi
 
-# Remove existing .zpreztorc from Prezto repository if it doesn't match the updated one
-prezto_zpreztorc_path=~/.zprezto/runcoms/zpreztorc
-updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
-if [ -e $prezto_zpreztorc_path ]; then
-    if ! cmp -s $prezto_zpreztorc_path <(curl -fsSL $updated_zpreztorc_url); then
-        echo "Removing existing .zpreztorc..."
-        rm $prezto_zpreztorc_path || { echo "Failed to remove existing .zpreztorc file. Please check your file permissions and try again." >&2; exit 1; }
-    fi
-fi
-
-# Create links to zsh config files
-echo "Creating links to zsh config files..."
+# Function to create symbolic links safely
 create_link() {
-    local src=$1 dest=$2
-    if [ -L $dest ]; then
-        if [ "$(readlink -f $dest)" == "$src" ]; then
-            echo "Link $dest already exists and matches, skipping."
-            return
+    local src="$1"
+    local dest="$2"
+    if [ -L "$dest" ]; then
+        if [ "$(readlink "$dest")" = "$src" ]; then
+            echo "Link $dest already exists and points to $src, skipping."
         else
-            echo "Link $dest already exists but does not match, replacing..."
-            rm $dest || { echo "Failed to remove existing $dest symbolic link. Please check your file permissions and try again." >&2; exit 1; }
+            echo "Link $dest already exists but points elsewhere, updating..."
+            mv "$dest" "$dest.bak"
+            ln -sf "$src" "$dest"
         fi
-    elif [ -e $dest ]; then
-        if [ -f $dest ]; then
-            echo "Backing up existing $dest file..."
-            mv $dest $dest.backup || { echo "Failed to backup $dest file. Please check your file permissions and try again." >&2; exit 1; }
-        fi
-        rm $dest || { echo "Failed to remove existing $dest file. Please check your file permissions and try again." >&2; exit 1; }
+    elif [ -e "$dest" ]; then
+        echo "File $dest exists, backing up and replacing..."
+        mv "$dest" "$dest.bak"
+        ln -sf "$src" "$dest"
+    else
+        ln -sf "$src" "$dest"
     fi
-    ln -s $src $dest || { echo "Failed to create symbolic link for $dest file. Please check your file permissions and try again." >&2; exit 1; }
 }
 
+# Create symlinks for runcom files
+echo "Creating symlinks for zsh configuration files..."
+for rcfile in zlogin zlogout zprofile zshenv zshrc; do
+    create_link "$HOME/.zprezto/runcoms/$rcfile" "$HOME/.$rcfile"
+done
 
-create_link ~/.zprezto/runcoms/zlogin ~/.zlogin
-create_link ~/.zprezto/runcoms/zlogout ~/.zlogout
-create_link ~/.zprezto/runcoms/zprofile ~/.zprofile
-create_link ~/.zprezto/runcoms/zshenv ~/.zshenv
-create_link ~/.zprezto/runcoms/zshrc ~/.zshrc
+# Fetch updated .zpreztorc from GitHub
+echo "Fetching updated .zpreztorc from GitHub..."
+updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
+local_zpreztorc="$HOME/.zpreztorc"
 
-# Fetch .zpreztorc from the GitHub repo
-echo "Fetching .zpreztorc from GitHub..."
-curl -fsSL $updated_zpreztorc_url -o $prezto_zpreztorc_path || { echo "Failed to fetch .zpreztorc. Please check your network connection and try again." >&2; exit 1; }
-create_link $prezto_zpreztorc_path ~/.zpreztorc
+if [ -f "$local_zpreztorc" ]; then
+    if ! curl -fsSL "$updated_zpreztorc_url" | cmp -s - "$local_zpreztorc"; then
+        echo "Updating .zpreztorc..."
+        mv "$local_zpreztorc" "$local_zpreztorc.bak"
+        curl -fsSL "$updated_zpreztorc_url" -o "$local_zpreztorc"
+    else
+        echo ".zpreztorc is up to date."
+    fi
+else
+    echo "Downloading .zpreztorc..."
+    curl -fsSL "$updated_zpreztorc_url" -o "$local_zpreztorc"
+fi
 
-# Check if already running in zsh
-# if [[ $SHELL == *"zsh" ]]; then
-#     echo "Already running in zsh."
-# else
-#     # Change the default shell to zsh
-#     echo "Changing the default shell to zsh..."
-#     chsh -s $(which zsh) || { echo "Failed to change the default shell to zsh. Please check your file permissions and try again." >&2; exit 1; }
+# Change the default shell to zsh if not already zsh
+if [ "$SHELL" != "$(which zsh)" ]; then
+    echo "Changing default shell to zsh..."
+    chsh -s "$(which zsh)"
+else
+    echo "Default shell is already zsh."
+fi
 
-#     # Source the updated zsh configuration
-#     echo "Sourcing the updated zsh configuration..."
-#     source ~/.zshrc || { echo "Failed to source the updated zsh configuration. Please check your file permissions and try again." >&2; exit 1; }
-# fi
+echo "Prezto has been installed successfully!"
+echo "You may need to restart your terminal or log out and log back in to see the changes."
 
-echo "oh-my-zsh with Prezto theme and plugins has been installed successfully!"
-echo "You may need to restart your terminal or run 'source ~/.zshrc' to see the changes."
 touch "$FLAG_FILE"
