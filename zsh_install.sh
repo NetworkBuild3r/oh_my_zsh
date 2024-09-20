@@ -4,13 +4,15 @@ set -e  # Exit immediately if a command exits with a non-zero status
 
 FLAG_FILE="$HOME/.setup_completed_flag"
 
+# Check if the setup has already been completed
 if [ -f "$FLAG_FILE" ]; then
     echo "Setup already completed, skipping..."
     exit 0
 fi
 
-# Install Git and Zsh if not already installed
+# Install Git and Zsh if they are not already installed
 echo "Checking for Git and Zsh..."
+
 if ! command -v git &> /dev/null; then
     echo "Git not found, installing Git..."
     sudo apt-get update
@@ -27,7 +29,7 @@ else
     echo "Zsh is already installed."
 fi
 
-# Clone Prezto if not already cloned
+# Clone Prezto if it hasn't been cloned yet
 if [ ! -d "$HOME/.zprezto" ]; then
     echo "Cloning Prezto..."
     git clone --recursive https://github.com/sorin-ionescu/prezto.git "$HOME/.zprezto"
@@ -62,7 +64,7 @@ for rcfile in zlogin zlogout zprofile zshenv zshrc; do
     create_link "$HOME/.zprezto/runcoms/$rcfile" "$HOME/.$rcfile"
 done
 
-# Fetch updated .zpreztorc from GitHub
+# Fetch the updated .zpreztorc from GitHub
 echo "Fetching updated .zpreztorc from GitHub..."
 updated_zpreztorc_url="https://raw.githubusercontent.com/NetworkBuild3r/oh_my_zsh/main/.zpreztorc"
 local_zpreztorc="$HOME/.zpreztorc"
@@ -80,10 +82,12 @@ else
     curl -fsSL "$updated_zpreztorc_url" -o "$local_zpreztorc"
 fi
 
-# Change the default shell to zsh if not already zsh
-if [ "$SHELL" != "$(which zsh)" ]; then
+# Change the default shell to zsh if it's not already set
+current_shell=$(getent passwd $USER | cut -d: -f7)
+if [ "$current_shell" != "$(which zsh)" ]; then
     echo "Changing default shell to zsh..."
     chsh -s "$(which zsh)"
+    echo "Default shell changed to zsh. Please log out and log back in for the change to take effect."
 else
     echo "Default shell is already zsh."
 fi
@@ -91,4 +95,5 @@ fi
 echo "Prezto has been installed successfully!"
 echo "You may need to restart your terminal or log out and log back in to see the changes."
 
+# Create a flag file to indicate setup completion
 touch "$FLAG_FILE"
