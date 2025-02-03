@@ -70,13 +70,27 @@ else
   curl -fsSL "$updated_zpreztorc_url" -o "$local_zpreztorc"
 fi
 
-# Improved shell check using the active process name
+# Interactive prompt to change the default shell to zsh
 if [ "$(ps -p $$ -o comm=)" = "zsh" ]; then
   echo "Already running in zsh."
 else
-  echo "Changing the default shell to zsh..."
-  chsh -s "$(which zsh)"
-  echo "Default shell changed to zsh. Please log out and log back in for the change to take effect."
+  # Check if the shell is interactive
+  if [ -t 0 ]; then
+    read -p "Do you want to change your default shell to zsh? [Y/n] " response
+    response=${response:-Y}
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+      echo "Changing the default shell to zsh..."
+      if chsh -s "$(which zsh)"; then
+        echo "Default shell changed to zsh. Please log out and log back in for the change to take effect."
+      else
+        echo "chsh command failed. You might need to change your shell manually."
+      fi
+    else
+      echo "Skipping default shell change. You can run 'chsh -s $(which zsh)' later if desired."
+    fi
+  else
+    echo "Non-interactive shell detected; skipping default shell change. Run 'chsh -s $(which zsh)' manually when ready."
+  fi
 fi
 
 echo "Prezto has been installed successfully!"
