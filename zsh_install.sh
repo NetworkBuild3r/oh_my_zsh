@@ -1,33 +1,31 @@
 #!/bin/bash
-set -e  # Exit immediately if a command exits with a non-zero status
+set -e  # exit if any command fails
 
-FLAG_FILE="$HOME/.setup_completed_flag"
+FLAG_FILE="$HOME/.oh_my_zsh_installed"
 
-# Check if the setup has already been completed
+# If installation has been completed already, exit immediately.
 if [ -f "$FLAG_FILE" ]; then
-  echo "Setup already completed, skipping..."
+  echo "Oh My Zsh is already installed. Exiting."
   exit 0
 fi
 
-# Install Git and Zsh if they are not already installed
+# -- Install prerequisites: Git and Zsh --
 echo "Checking for Git and Zsh..."
-if ! command -v git &> /dev/null; then
-  echo "Git not found, installing Git..."
-  sudo apt-get update
-  sudo apt-get install -y git
+if ! command -v git >/dev/null 2>&1; then
+  echo "Git not found; installing Git..."
+  sudo apt-get update && sudo apt-get install -y git
 else
   echo "Git is already installed."
 fi
 
-if ! command -v zsh &> /dev/null; then
-  echo "Zsh not found, installing Zsh..."
-  sudo apt-get update
-  sudo apt-get install -y zsh
+if ! command -v zsh >/dev/null 2>&1; then
+  echo "Zsh not found; installing Zsh..."
+  sudo apt-get update && sudo apt-get install -y zsh
 else
   echo "Zsh is already installed."
 fi
 
-# Clone Prezto if it hasn't been cloned yet
+# -- Clone Prezto if not already present --
 if [ ! -d "$HOME/.zprezto" ]; then
   echo "Cloning Prezto..."
   git clone --recursive https://github.com/sorin-ionescu/prezto.git "$HOME/.zprezto"
@@ -35,67 +33,96 @@ else
   echo "Prezto is already cloned."
 fi
 
-# Function to create symbolic links safely (idempotent version)
-create_link() {
-  local src="$1"
-  local dest="$2"
-  [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ] && { echo "Link $dest exists and is correct, skipping."; return; }
-  [ -e "$dest" ] && { echo "Backing up existing $dest..."; mv "$dest" "${dest}.bak"; }
-  ln -s "$src" "$dest"
-}
-
-# Create symlinks for Prezto runcom files
+# -- Create symlinks for Prezto runcom files --
 echo "Creating symlinks for zsh configuration files..."
 for rcfile in zlogin zlogout zprofile zshenv zshrc; do
-  create_link "$HOME/.zprezto/runcoms/$rcfile" "$HOME/.$rcfile"
+  SRC="$HOME/.zprezto/runcoms/$rcfile"
+  DEST="$HOME/.$rcfile"
+  if [ -e "$DEST" ] && [ "$(readlink "$DEST")" != "$SRC" ]; then
+    echo "Backing up existing $DEST..."
+    mv "$DEST" "${DEST}.bak"
+  fi
+  ln -sf "$SRC" "$DEST"
 done
 
-# Overwrite .zpreztorc with a safe configuration file
-echo "Installing safe .zpreztorc configuration..."
+# -- Write out your custom .zpreztorc --
+echo "Installing custom .zpreztorc..."
 cat > "$HOME/.zpreztorc" << 'EOF'
-# ~/.zpreztorc - Prezto configuration file
+#
+# Sets Prezto options.
+#
+# Authors:
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#
 
-# Prevent re-loading if already sourced
-if [[ -n "$OH_MY_ZSH_LOADED" ]]; then
-  return
-fi
-export OH_MY_ZSH_LOADED=1
+#
+# General
+#
+zstyle ':prezto:*:*' color 'yes'
 
-# Set the location of the Prezto installation
-export ZPREZTODIR="$HOME/.zprezto"
+# Set the Prezto modules to load (order matters)
+zstyle ':prezto:load' pmodule \
+  'environment' \
+  'terminal' \
+  'editor' \
+  'syntax-highlighting' \
+  'history' \
+  'history-substring-search' \
+  'autosuggestions' \
+  'directory' \
+  'spectrum' \
+  'utility' \
+  'completion' \
+  'prompt' \
+  'git' \
+  'spectrum' \
+  'docker'  \
+  'ssh'
 
-# Source Prezto if available
-if [ -s "$ZPREZTODIR/init.zsh" ]; then
-  source "$ZPREZTODIR/init.zsh"
-else
-  echo "Prezto not found in $ZPREZTODIR" >&2
-fi
+#
+# Editor
+#
+zstyle ':prezto:module:editor' key-bindings 'emacs'
+
+#
+# Prompt
+#
+zstyle ':prezto:module:prompt' theme 'steeef'
+
+#
+# Python
+#
+zstyle ':prezto:module:python:virtualenv' auto-switch 'yes'
+
+#
+# SSH
+#
+zstyle ':prezto:module:ssh:load' identities 'id_rsa' 'id_rsa_puppet' 'id_rsa_itadmin'
+
+#
+# Syntax Highlighting
+#
+zstyle ':prezto:module:syntax-highlighting' highlighters \
+  'main' \
+  'brackets' \
+  'pattern' \
+  'line' \
+  'cursor' \
+  'root'
+
+zstyle ':prezto:module:syntax-highlighting' pattern \
+  'rm*-rf*' 'fg=white,bold,bg=red'
+
+#
+# Terminal
+#
+zstyle ':prezto:module:terminal' auto-title 'yes'
+zstyle ':prezto:module:terminal:window-title' format '%n@%m: %s'
+zstyle ':prezto:module:terminal:tab-title' format '%m: %s'
 EOF
 
-# Prompt (interactively) to change the default shell to zsh
-if [ "$(ps -p $$ -o comm=)" = "zsh" ]; then
-  echo "Already running in zsh."
-else
-  if [ -t 0 ]; then
-    read -p "Do you want to change your default shell to zsh? [Y/n] " response
-    response=${response:-Y}
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-      echo "Changing the default shell to zsh..."
-      if chsh -s "$(which zsh)"; then
-        echo "Default shell changed to zsh. Please log out and log back in for the change to take effect."
-      else
-        echo "chsh command failed. You might need to change your shell manually."
-      fi
-    else
-      echo "Skipping default shell change. You can run 'chsh -s $(which zsh)' later if desired."
-    fi
-  else
-    echo "Non-interactive shell detected; skipping default shell change. Run 'chsh -s $(which zsh)' manually when ready."
-  fi
-fi
-
-echo "Prezto has been installed successfully!"
-echo "You may need to restart your terminal or log out and log back in to see the changes."
-
-# Create a flag file to indicate setup completion
+# -- Create the installation flag file so we don't reinstall each session --
 touch "$FLAG_FILE"
+echo "Oh My Zsh (with Prezto) has been installed successfully."
+echo "Your .zshrc now simply sources Prezto. (To see your new setup, open a new terminal.)"
+echo "If needed, change your default shell with: chsh -s $(which zsh)"
