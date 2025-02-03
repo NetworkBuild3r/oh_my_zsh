@@ -71,11 +71,13 @@ else
 fi
 
 # Improved shell check using the active process name
-[ "$(ps -p $$ -o comm=)" = "zsh" ] && echo "Already running in zsh." || {
+if [ "$(ps -p $$ -o comm=)" = "zsh" ]; then
+  echo "Already running in zsh."
+else
   echo "Changing the default shell to zsh..."
   chsh -s "$(which zsh)"
   echo "Default shell changed to zsh. Please log out and log back in for the change to take effect."
-}
+fi
 
 echo "Prezto has been installed successfully!"
 echo "You may need to restart your terminal or log out and log back in to see the changes."
